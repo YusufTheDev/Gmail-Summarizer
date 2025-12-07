@@ -75,13 +75,23 @@ def return_unread_emails(service):
             'From': email_msg['From'],
             'Subject': email_msg['Subject'],
             'id': message['id'],
-            'Body': ""
+            'Body': "",
+            'BodyHtml': ""
         }
 
         # Extract plain text body and attachments
         for part in email_msg.walk():
-            if part.get_content_type() == 'text/plain':
-                filtered_message['Body'] += part.get_payload(decode=True).decode()
+            content_type = part.get_content_type()
+            if content_type == 'text/plain':
+                try:
+                   filtered_message['Body'] += part.get_payload(decode=True).decode(errors='replace')
+                except:
+                   pass
+            elif content_type == 'text/html':
+                try:
+                   filtered_message['BodyHtml'] += part.get_payload(decode=True).decode(errors='replace')
+                except:
+                   pass
             elif part.get('filename'):
                 attachment_text = extract_attachment_text(service, message['id'], part)
                 filtered_message['Body'] += f"\n[Attachment: {part.get('filename')}]\n{attachment_text}\n"
@@ -95,6 +105,16 @@ def mark_emails_as_read(service, email_id):
         id=email_id,
         body={'removeLabelIds': ['UNREAD']}
     ).execute()
+
+def mark_batch_as_read(service, email_ids):
+    batch = service.new_batch_http_request()
+    for email_id in email_ids:
+        batch.add(service.users().messages().modify(
+            userId='me',
+            id=email_id,
+            body={'removeLabelIds': ['UNREAD']}
+        ))
+    batch.execute()
 
 def trash_email(service, email_id):
     service.users().messages().trash(userId='me', id=email_id).execute()

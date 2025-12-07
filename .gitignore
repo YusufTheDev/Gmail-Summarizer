@@ -1,5 +1,40 @@
+# General
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# Sensitive Data (CRITICAL - DO NOT COMMIT)
+.env
+.env.*
+!.env.example
 credentials.json
 token.json
+client_secret.json
+
+# Python / Flask
 __pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+flask_session/
+instance/
+.pytest_cache/
+flask-server/venv/
+flask-server/__pycache__/
+
+# Node / React (Frontend)
+node_modules/
+build/
+dist/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+client/node_modules/
+client/build/
+
+# Data Files
 summaries.txt
-.env
