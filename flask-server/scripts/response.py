@@ -2,10 +2,23 @@ import os
 import json
 import re
 import google.generativeai as genai
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv()
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# Try to find .env file in current or parent directories
+env_file = find_dotenv()
+if env_file:
+    print(f"Loading .env from: {env_file}")
+    load_dotenv(env_file)
+else:
+    print("Warning: No .env file found.")
+
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    print("Error: GEMINI_API_KEY not found in environment.")
+else:
+    print("GEMINI_API_KEY loaded successfully.")
+
+genai.configure(api_key=api_key)
 
 VALID_ACTIONS = {"ignore", "mark_as_read", "trash", "reply"}
 

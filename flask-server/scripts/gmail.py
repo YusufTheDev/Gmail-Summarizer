@@ -7,6 +7,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from PyPDF2 import PdfReader
 import docx
+import io
+
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 query = "is:unread"

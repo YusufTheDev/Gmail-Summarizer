@@ -1,5 +1,7 @@
 from flask import Flask, redirect, request, jsonify
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 import os
@@ -13,8 +15,23 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key_for_local_dev"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+db = SQLAlchemy(app)
 CORS(app, supports_credentials=True, origins=["http://localhost:3000"])
+
+# --- Database Models ---
+class UsageLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_email = db.Column(db.String(120), nullable=True) # Optional if we don't strictly track by email yet
+    emails_processed = db.Column(db.Integer, default=0)
+    time_saved_minutes = db.Column(db.Float, default=0.0)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Create tables within app context
+with app.app_context():
+    db.create_all()
 
 GOOGLE_CLIENT_SECRETS_FILE = os.path.join(pathlib.Path(__file__).parent, "credentials.json")
 # We list both because if the user previously granted readonly, Google returns both.
@@ -60,8 +77,10 @@ def callback():
 
 @app.route("/summarize")
 def summarize():
+    print("Received summarize request")
     state = request.args.get("state")
     if not state or state not in active_sessions or not active_sessions[state]:
+        print("User not logged in or session invalid")
         return jsonify({"error": "User not logged in"}), 401
 
     credentials = google_credentials_from_dict(active_sessions[state])
@@ -71,13 +90,18 @@ def summarize():
     if not filtered_messages:
         return jsonify({"summary": "No unread emails found."})
 
-    important_emails, global_summary = summarize_emails(filtered_messages)
-    save_summary_to_txt(important_emails, filename="summaries.txt")
+    try:
+        important_emails, global_summary = summarize_emails(filtered_messages)
+        save_summary_to_txt(important_emails, filename="summaries.txt")
 
-    return jsonify({
-        "emails": important_emails,
-        "global_summary": global_summary
-    })
+        return jsonify({
+            "emails": important_emails,
+            "global_summary": global_summary
+        })
+    except Exception as e:
+        print(f"Error during summarization: {e}")
+        return jsonify({"error": f"Summarization failed: {str(e)}"}), 500
+
 
 
 @app.route("/action/trash", methods=["POST"])
@@ -168,6 +192,67 @@ def reply_action():
         return jsonify({"error": str(e)}), 500
 
 
+# --- New Stats Endpoints ---
+
+@app.route("/api/log_usage", methods=["POST"])
+def log_usage():
+    data = request.json
+    emails_processed = data.get("emails_processed", 0)
+    
+    # Simple heuristic: 2 minutes saved per email summarized
+    time_saved = emails_processed * 2.0 
+    
+    new_log = UsageLog(
+        emails_processed=emails_processed,
+        time_saved_minutes=time_saved,
+        date=datetime.utcnow()
+    )
+    
+    try:
+        db.session.add(new_log)
+        db.session.commit()
+        return jsonify({"success": True, "time_saved": time_saved})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/stats", methods=["GET"])
+def get_stats():
+    # Calculate total time saved
+    total_saved = db.session.query(db.func.sum(UsageLog.time_saved_minutes)).scalar() or 0
+    total_emails = db.session.query(db.func.sum(UsageLog.emails_processed)).scalar() or 0
+    
+    # Get last 7 days breakdown
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=7)
+    
+    # SQLite logic might vary for dates, but this is standard SQLAlchemy
+    logs = UsageLog.query.filter(UsageLog.date >= start_date).all()
+    
+    # Process logs into days
+    daily_stats = {}
+    for i in range(7):
+        day = (end_date - timedelta(days=i)).strftime("%Y-%m-%d")
+        daily_stats[day] = 0
+        
+    for log in logs:
+        day_str = log.date.strftime("%Y-%m-%d")
+        if day_str in daily_stats:
+            daily_stats[day_str] += log.time_saved_minutes
+            
+    # Format for graph (oldest to newest)
+    sorted_days = sorted(daily_stats.keys())
+    graph_data = {
+        "x": sorted_days,
+        "y": [daily_stats[day] for day in sorted_days]
+    }
+    
+    return jsonify({
+        "total_time_saved_minutes": total_saved,
+        "total_emails_processed": total_emails,
+        "graph_data": graph_data,
+        "productivity_score": int(total_saved * 1.5) # Arbitrary score logic
+    })
+
 
 def credentials_to_dict(credentials):
     return {
@@ -199,3 +284,4 @@ def home():
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
+

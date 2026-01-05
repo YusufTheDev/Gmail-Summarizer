@@ -1,19 +1,16 @@
-:root {
-    --bg-color: #0f172a;
-    --text-color: #f8fafc;
-    --text-muted: #94a3b8;
-    --primary-color: #38bdf8;
-    --primary-hover: #0ea5e9;
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+:root {
+    --bg-color: #ffffff;
+    --text-color: #0f172a;
+    --text-muted: #64748b;
+    --primary-color: #38bdf8;
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    --font-family: 'Inter', sans-serif;
 }
 
 body {
@@ -23,31 +20,23 @@ body {
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--bg-color);
     color: var(--text-color);
-    /* Darker, richer gradient */
-    background-image:
-        radial-gradient(at 0% 0%, hsla(253, 16%, 10%, 1) 0, transparent 50%),
-        radial-gradient(at 50% 0%, hsla(225, 39%, 15%, 1) 0, transparent 50%),
-        radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%);
-    background-attachment: fixed;
     min-height: 100vh;
+}
+
+.texture-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-image: url('./assets/texture_bg.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.8;
+    pointer-events: none;
 }
 
 code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    color: #fff;
-}
-
-button {
-    font-family: inherit;
-    cursor: pointer;
 }

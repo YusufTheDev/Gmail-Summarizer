@@ -9,16 +9,24 @@
 
 /* Glass Card Utility */
 .glass-card {
-  background: rgba(30, 41, 59, 0.7);
-  /* Much more opaque for readability */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  border-radius: 16px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 20px;
   padding: 2rem;
-  color: var(--text-color);
+  color: #1e293b;
+  /* Darker text for readability on light glass */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(168, 85, 247, 0.15);
+  /* Soft purple glow */
+}
+
 
 /* Login Component */
 .login-container {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, CheckCircle, Reply, Loader, Send, X } from 'lucide-react';
+import { Trash2, CheckCircle, Reply, Loader, Send, X, AlertCircle } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import '../App.css';
 
@@ -40,170 +40,136 @@ const SummaryCard = ({ content, onTrash, onReply, onMarkRead }) => {
     };
 
     return (
-        <div className="glass-card" style={{ textAlign: 'left', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                <div style={{ flex: 1, paddingRight: '1rem' }}>
-                    <h3 style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '0.2rem' }}>{Subject || 'No Subject'}</h3>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>From: {From || 'Unknown'}</p>
+        <div className="glass-card transition-all duration-300 hover:shadow-xl hover:shadow-indigo-100/40 relative overflow-hidden group">
+            {/* Header */}
+            <div className="flex justify-between items-start mb-4 pb-3 border-b border-slate-200/50">
+                <div className="flex-1 pr-4">
+                    <h3 className="text-lg font-bold text-slate-800 mb-1 leading-tight group-hover:text-indigo-600 transition-colors">
+                        {Subject || 'No Subject'}
+                    </h3>
+                    <p className="text-sm font-medium text-slate-500">From: <span className="text-slate-700">{From || 'Unknown'}</span></p>
                 </div>
 
                 {/* Quick Actions (Always visible) */}
                 {!isReplying && (
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="flex gap-1 shrink-0">
                         <button
                             onClick={() => handleAction('mark_read', () => onMarkRead(id))}
                             disabled={loadingAction === 'mark_read'}
                             title="Mark as Read"
-                            style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                            className="p-2 rounded-full hover:bg-green-50 text-slate-400 hover:text-green-500 transition-colors"
                         >
-                            {loadingAction === 'mark_read' ? <Loader className="loading-spinner" size={20} /> : <CheckCircle size={20} />}
+                            {loadingAction === 'mark_read' ? <Loader className="animate-spin" size={18} /> : <CheckCircle size={18} />}
                         </button>
                         <button
                             onClick={() => handleAction('trash', () => onTrash(id))}
                             disabled={loadingAction === 'trash'}
                             title="Move to Trash"
-                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                            className="p-2 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                         >
-                            {loadingAction === 'trash' ? <Loader className="loading-spinner" size={20} /> : <Trash2 size={20} />}
+                            {loadingAction === 'trash' ? <Loader className="animate-spin" size={18} /> : <Trash2 size={18} />}
                         </button>
                     </div>
                 )}
             </div>
 
-            <div className="summary-content" style={{ marginBottom: '1rem' }}>
-                <p style={{ marginTop: '0.2rem' }}>{Summary}</p>
+            {/* Summary Body */}
+            <div className="mb-5 text-slate-600 leading-relaxed text-[15px]">
+                {Summary}
             </div>
 
+            {/* Action / Recommendation Zone */}
             {(RecommendedAction || ReplyContent || isReplying) && (
-                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className={`p-4 rounded-xl border transition-all ${isReplying || RecommendedAction === 'reply' ? 'bg-indigo-50/50 border-indigo-100' : 'bg-amber-50/50 border-amber-100'}`}>
 
                     {/* Recommendation Header */}
                     {!isReplying && RecommendedAction && (
-                        <div style={{ marginBottom: ReplyContent ? '1rem' : 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div>
-                                <strong style={{ color: '#fbbf24', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommendation:</strong>
-                                <p style={{ fontSize: '0.95rem', marginTop: '0.2rem' }}>
-                                    {RecommendedAction === 'trash' && "Delete this email"}
-                                    {RecommendedAction === 'reply' && "Send a reply"}
-                                    {RecommendedAction === 'mark_as_read' && "Mark as read"}
-                                </p>
-                            </div>
+                        <div className="flex items-center gap-2 mb-3">
+                            <AlertCircle size={16} className={RecommendedAction === 'trash' ? 'text-red-500' : 'text-amber-500'} />
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                Recommendation:
+                            </span>
+                            <span className="text-sm font-bold text-slate-700">
+                                {RecommendedAction === 'trash' && "Delete this email"}
+                                {RecommendedAction === 'reply' && "Send a reply"}
+                                {RecommendedAction === 'mark_as_read' && "Mark as read"}
+                            </span>
                         </div>
                     )}
 
                     {/* Reply Editing Interface */}
                     {isReplying ? (
-                        <div style={{ animation: 'fadeIn 0.3s' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                <strong style={{ color: '#34d399' }}>Edit Reply</strong>
-                                <button onClick={() => setIsReplying(false)} style={{ background: 'transparent', border: 'none', color: '#94a3b8' }}>
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="flex justify-between items-center mb-2">
+                                <strong className="text-indigo-600 text-sm">Drafting Reply</strong>
+                                <button onClick={() => setIsReplying(false)} className="text-slate-400 hover:text-slate-600">
                                     <X size={16} />
                                 </button>
                             </div>
                             <textarea
                                 value={replyText}
                                 onChange={(e) => setReplyText(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    minHeight: '100px',
-                                    background: 'rgba(0,0,0,0.2)',
-                                    border: '1px solid #34d399',
-                                    color: 'white',
-                                    borderRadius: '8px',
-                                    padding: '8px',
-                                    marginBottom: '10px',
-                                    fontFamily: 'inherit'
-                                }}
+                                className="w-full min-h-[100px] p-3 rounded-lg bg-white border border-indigo-100 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:outline-none text-slate-700 text-sm mb-3 resize-y font-sans shadow-sm"
+                                placeholder="Write your reply..."
+                                autoFocus
                             />
                             <button
                                 onClick={() => handleAction('reply', () => onReply(id, replyText))}
                                 disabled={loadingAction === 'reply'}
-                                className="action-btn"
-                                style={{
-                                    width: '100%',
-                                    background: 'rgba(52, 211, 153, 0.2)',
-                                    border: '1px solid rgba(52, 211, 153, 0.4)',
-                                    color: '#34d399',
-                                    boxShadow: 'none',
-                                    justifyContent: 'center'
-                                }}
+                                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-200"
                             >
-                                {loadingAction === 'reply' ? <Loader className="loading-spinner" size={16} /> : <Send size={16} />}
+                                {loadingAction === 'reply' ? <Loader className="animate-spin" size={16} /> : <Send size={16} />}
                                 Send Reply
                             </button>
                         </div>
                     ) : (
-                        /* Static Recommendation Actions */
-                        <>
+                        /* Static Actions */
+                        <div className="space-y-3">
                             {ReplyContent && RecommendedAction === 'reply' && (
-                                <div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <strong style={{ color: '#34d399', fontSize: '0.9rem' }}>Draft Reply:</strong>
-                                        <p style={{ fontSize: '0.95rem', marginTop: '0.2rem', fontStyle: 'italic', opacity: 0.9 }}>"{ReplyContent}"</p>
-                                    </div>
+                                <div className="bg-white/80 p-3 rounded-lg border border-indigo-50/50">
+                                    <span className="text-xs font-bold text-indigo-400 block mb-1">DRAFT REPLY</span>
+                                    <p className="text-sm text-slate-600 italic">"{ReplyContent}"</p>
 
                                     <button
                                         onClick={startReply}
-                                        className="action-btn"
-                                        style={{
-                                            width: '100%',
-                                            background: 'rgba(52, 211, 153, 0.2)',
-                                            border: '1px solid rgba(52, 211, 153, 0.4)',
-                                            color: '#34d399',
-                                            boxShadow: 'none',
-                                            justifyContent: 'center'
-                                        }}
+                                        className="mt-3 w-full py-2 px-4 bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                                     >
                                         <Reply size={16} />
                                         Review & Send
                                     </button>
                                 </div>
                             )}
+
                             {RecommendedAction === 'trash' && (
                                 <button
                                     onClick={() => handleAction('trash', () => onTrash(id))}
                                     disabled={loadingAction === 'trash'}
-                                    className="action-btn"
-                                    style={{
-                                        width: '100%',
-                                        marginTop: '10px',
-                                        background: 'rgba(239, 68, 68, 0.2)',
-                                        border: '1px solid rgba(239, 68, 68, 0.4)',
-                                        color: '#fca5a5',
-                                        boxShadow: 'none',
-                                        justifyContent: 'center'
-                                    }}
+                                    className="w-full py-2 px-4 bg-white border border-red-200 text-red-500 hover:bg-red-50 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
                                 >
-                                    {loadingAction === 'trash' ? <Loader className="loading-spinner" size={16} /> : <Trash2 size={16} />}
+                                    {loadingAction === 'trash' ? <Loader className="animate-spin" size={16} /> : <Trash2 size={16} />}
                                     Confirm Delete
                                 </button>
                             )}
-                        </>
+                        </div>
                     )}
                 </div>
             )}
 
             {/* Show Original Toggle */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '1rem', paddingTop: '0.5rem' }}>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col">
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                    className="self-start text-xs font-medium text-slate-400 hover:text-indigo-500 transition-colors flex items-center gap-1.5 py-1"
                 >
-                    {isExpanded ? "Hide Original Email" : "Show Original Email"}
+                    {isExpanded ? (
+                        <>Hide Original Email</>
+                    ) : (
+                        <>Show Original Email</>
+                    )}
                 </button>
 
                 {isExpanded && (
-                    <div style={{
-                        marginTop: '10px',
-                        padding: '15px',
-                        background: '#fff', // White background for email readability
-                        borderRadius: '4px',
-                        fontSize: '1rem',
-                        color: '#1a202c', // Dark text for readability
-                        maxHeight: '400px',
-                        overflowY: 'auto',
-                        border: '1px solid rgba(255,255,255,0.1)'
-                    }}>
+                    <div className="mt-3 p-4 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-700 overflow-y-auto max-h-96 shadow-inner font-mono leading-relaxed">
                         {content.BodyHtml ? (
                             <div
                                 dangerouslySetInnerHTML={{
@@ -211,7 +177,7 @@ const SummaryCard = ({ content, onTrash, onReply, onMarkRead }) => {
                                 }}
                             />
                         ) : (
-                            <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+                            <div className="whitespace-pre-wrap">
                                 {content.Body || "No content available."}
                             </div>
                         )}
